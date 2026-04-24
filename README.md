@@ -14,13 +14,10 @@ Copy and paste this into any Hermes conversation:
 
 ```
 Install the hermes-exploration plugin:
-1. Run: pip install hermes-exploration
-2. Add to ~/.hermes/config.yaml under plugins.enabled: exploration
-3. Reload Hermes (exit and restart, or /reload)
+hermes plugins install thakoreh/hermes-exploration-plugin --enable
 
-Or if you prefer manual setup:
-1. Run: hermes plugins install hermes-exploration
-   (this clones the repo to ~/.hermes/plugins/exploration and auto-enables it)
+Then restart Hermes:
+hermes gateway restart
 ```
 
 After installing, try:
@@ -29,6 +26,30 @@ After installing, try:
 /explore llm cheap
 /explore deploy docker
 ```
+
+---
+
+### Alternative: pip install
+
+If you prefer pip over the git-based install:
+
+```bash
+pip install hermes-exploration
+```
+
+Then manually add `exploration` to your plugins list in `~/.hermes/config.yaml`:
+
+```yaml
+plugins:
+  enabled:
+    - exploration
+```
+
+Then restart Hermes: `hermes gateway restart`
+
+---
+
+**Windows note:** `hermes plugins install` and the paths above work on Windows too. If using Command Prompt or PowerShell, `~` expands to your user profile (e.g. `C:\Users\YourName\`). You can also find your config at `%USERPROFILE%\.hermes\config.yaml`.
 
 ---
 
