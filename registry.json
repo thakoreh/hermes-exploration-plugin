@@ -97,6 +97,24 @@
       "_file": "/Users/hiren/hermes-plugins/exploration/tools/aider.md",
       "notes": "## Overview\n\nAider is a CLI coding assistant that edits code directly in your repo. It understands git diffs, so it knows what changed and why. Connect it to Claude, GPT-4o, or any OpenAI-compatible e",
       "_type": "tool"
+    },
+    {
+      "name": "test-plugin-tool",
+      "description": "A tool added by the test suite to verify the plugin works end to end",
+      "category": "testing",
+      "use_cases": [
+        "unit testing"
+      ],
+      "github_url": "https://github.com/test/test",
+      "install_command": "pip install test-plugin",
+      "official_documentation_url": "https://test.dev/docs",
+      "pricing_model": "free",
+      "status": "verified",
+      "added_by": "hermes-test",
+      "tags": [
+        "testing"
+      ],
+      "type": "tool"
     }
   ],
   "apis": [
