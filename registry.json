@@ -1,0 +1,311 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-04-24",
+  "tools": [
+    {
+      "id": "modal",
+      "name": "Modal",
+      "description": "Run serverless Python code on GPU hardware. Define functions with decorators, Modal handles the infrastructure, cold starts, and scaling.",
+      "category": "infrastructure",
+      "url": "https://modal.com",
+      "pricing": "freemium",
+      "alternatives": [
+        "replicate",
+        "banan",
+        "Vercel-functions"
+      ],
+      "quality_score": 8.8,
+      "discovery_context": "Needed persistent GPU access for batch LLM inference without managing a server",
+      "discovered_by": "hermes-mlops",
+      "discovered_at": "2026-04-10",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "Python-first": "@app.function(), @app.image() decorators",
+      "Supports": "any Python package, CUDA, multi-GPU, batch inference",
+      "Best for": "batch processing, async LLM pipelines, data processing",
+      "Free": "$30/mo compute credits, 2 concurrent jobs",
+      "flags": [
+        "has-api",
+        "open-source",
+        "has-free-tier",
+        "has-python-sdk",
+        "self-hostable"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/tools/modal.md",
+      "notes": "## Overview\n\nModal is infrastructure-as-code for Python. Write Python functions, decorate them with `@app.function()`, and Modal handles everything else: GPU allocation, container management, cold sta",
+      "_type": "tool"
+    },
+    {
+      "id": "firecrawl",
+      "name": "Firecrawl",
+      "description": "Turn entire websites into clean markdown or structured data. Handles JavaScript-rendered pages, rate limits, and anti-scraping automatically.",
+      "category": "scraping",
+      "url": "https://firecrawl.dev",
+      "pricing": "freemium",
+      "alternatives": [
+        "crawlfe",
+        "scrapeops",
+        "apify"
+      ],
+      "quality_score": 9.0,
+      "discovery_context": "Needed to extract content from a JavaScript-heavy SPA for RAG pipeline",
+      "discovered_by": "hermes-content",
+      "discovered_at": "2026-04-15",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "API": "POST https://api.firecrawl.dev/v0/crawl",
+      "Best for": "RAG data pipelines, competitor research, content aggregation.",
+      "Free": "500 pages/month",
+      "flags": [
+        "has-api",
+        "has-free-tier",
+        "supports-webhook"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/tools/firecrawl.md",
+      "notes": "## Overview\n\nFirecrawl is a web scraping API that handles the hard parts: JavaScript rendering, rate limiting, proxy rotation, and extracting clean content. Give it a URL or sitemap, get back clean ma",
+      "_type": "tool"
+    },
+    {
+      "id": "aider",
+      "name": "Aider",
+      "description": "Terminal-based AI coding assistant. Edit code directly in your local repo with git diff awareness. Works with any LLM that supports function calling.",
+      "category": "ai-coding",
+      "url": "https://aider.chat",
+      "pricing": "free",
+      "alternatives": [
+        "claude-code",
+        "cursor",
+        "windsurf",
+        "github-copilot"
+      ],
+      "quality_score": 8.3,
+      "discovery_context": "Looking for a CLI-based coding agent that works with local git repos",
+      "discovered_by": "hermes-core",
+      "discovered_at": "2026-04-15",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "Install": "pip install aider-chat",
+      "Works with": "Claude 3.5/3.7, GPT-4o, Gemini, DeepSeek, Llama",
+      "Best for": "terminal-first workflows, solo developers, fast edits.",
+      "Key feature": "commits are automatically git-aware.",
+      "flags": [
+        "has-api",
+        "open-source",
+        "has-cli",
+        "has-free-tier"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/tools/aider.md",
+      "notes": "## Overview\n\nAider is a CLI coding assistant that edits code directly in your repo. It understands git diffs, so it knows what changed and why. Connect it to Claude, GPT-4o, or any OpenAI-compatible e",
+      "_type": "tool"
+    }
+  ],
+  "apis": [
+    {
+      "id": "tavily",
+      "name": "Tavily AI",
+      "description": "Search API specifically designed for AI agents. Returns clean, relevant results without the SEO noise that clogs up AI responses.",
+      "category": "search",
+      "url": "https://tavily.com",
+      "pricing": "freemium",
+      "alternatives": [
+        "serpapi",
+        "bing-search",
+        "jina"
+      ],
+      "quality_score": 8.8,
+      "discovery_context": "Building RAG pipeline and needed clean web search results",
+      "discovered_by": "hermes-content",
+      "discovered_at": "2026-04-12",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "Python": "pip install tavily-python",
+      "API key": "free at tavily.com",
+      "Best for": "AI agent web research, RAG pipelines, fact checking.",
+      "Returns": "title, url, description, raw content.",
+      "Free": "1000 queries/month",
+      "flags": [
+        "has-api",
+        "has-free-tier",
+        "supports-search"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/apis/tavily.md",
+      "notes": "## Overview\n\nTavily is a search API built specifically for AI applications. Unlike Google or Bing, it returns structured, relevant results optimized for AI consumption \u2014 no ads, no SEO content, no ran",
+      "_type": "api"
+    },
+    {
+      "id": "jina",
+      "name": "Jina AI",
+      "description": "Reader API turns any URL into clean LLM-friendly text. Also provides top-tier embeddings and a Reranker API.",
+      "category": "search",
+      "url": "https://jina.ai",
+      "pricing": "freemium",
+      "alternatives": [
+        "tavily",
+        "firecrawl"
+      ],
+      "quality_score": 8.5,
+      "discovery_context": "Needed to extract article text from news sites for a summarization pipeline",
+      "discovered_by": "hermes-content",
+      "discovered_at": "2026-04-05",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "Reader": "GET https://r.jina.ai/https://URL",
+      "Embeddings": "https://api.jina.ai/v1/embeddings",
+      "Free": "200K tokens/day for embeddings, 1000 reader calls/month",
+      "flags": [
+        "has-api",
+        "has-free-tier",
+        "open-source",
+        "supports-streaming"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/apis/jina.md",
+      "notes": "## Overview\n\nJina AI provides two essential APIs for AI developers: a Reader that extracts clean text from any URL, and embedding models that compete with OpenAI at a fraction of the cost.\n\n## Key Fea",
+      "_type": "api"
+    }
+  ],
+  "models": [
+    {
+      "id": "groq",
+      "name": "Groq",
+      "description": "Fastest LLM inference API available. Sub-second first-token latency for Llama 3, Mixtral, and Gemma models on custom LPU hardware.",
+      "category": "llm-provider",
+      "url": "https://console.groq.com",
+      "pricing": "freemium",
+      "alternatives": [
+        "openrouter",
+        "together"
+      ],
+      "quality_score": 9.2,
+      "discovery_context": "Building a real-time chat app and needed latency lower than OpenAI or Anthropic",
+      "discovered_by": "hermes-core",
+      "discovered_at": "2026-04-08",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "Models": "llama-3-70b, llama-3-8b, mixtral-8x7b, gemma-7b",
+      "Best for": "latency-critical applications, real-time chat",
+      "Free": "30 requests/min, 14,400 requests/day",
+      "flags": [
+        "has-api",
+        "has-free-tier",
+        "supports-streaming",
+        "supports-function-calling"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/models/groq.md",
+      "notes": "## Overview\n\nGroq's LPU (Language Processing Unit) delivers the fastest LLM inference in the industry. First-token latency under 1 second for 70B models. Great for real-time applications where speed m",
+      "_type": "model"
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "description": "Google's flagship multimodal model. Massive context window, native tool use, and strong performance on coding, reasoning, and video understanding.",
+      "category": "llm-chat",
+      "url": "https://ai.google.dev/gemini-api",
+      "pricing": "freemium",
+      "alternatives": [
+        "claude-3.5-sonnet",
+        "gpt-4o",
+        "openrouter"
+      ],
+      "quality_score": 9.0,
+      "discovery_context": "Comparing multimodal models for a video understanding pipeline",
+      "discovered_by": "hermes-mlops",
+      "discovered_at": "2026-04-20",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "API": "google-generativeai Python SDK",
+      "Best for": "long documents, video understanding, native tool use.",
+      "Context": "1M token context window.",
+      "Free tier": "60 requests/min, 1500 requests/day",
+      "flags": [
+        "has-api",
+        "has-free-tier",
+        "supports-vision",
+        "supports-streaming",
+        "supports-function-calling",
+        "supports-json-mode"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/models/gemini-2.5-pro.md",
+      "notes": "## Overview\n\nGemini 2.5 Pro is Google's most capable multimodal model. It handles text, images, audio, and video in a single context window. Its 1M token context and native tool use make it ideal for ",
+      "_type": "model"
+    },
+    {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "description": "Unified API gateway for 100+ LLM models from Anthropic, OpenAI, Meta, Mistral, and dozens of others. Single API key, single endpoint.",
+      "category": "llm-provider",
+      "url": "https://openrouter.ai",
+      "pricing": "freemium",
+      "alternatives": [
+        "apiogether",
+        "go\u5b57",
+        "nat.dev"
+      ],
+      "quality_score": 9.0,
+      "discovery_context": "Looking for a way to compare multiple LLM responses without managing multiple API keys",
+      "discovered_by": "hermes-core",
+      "discovered_at": "2026-04-20",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "Models": "claude-3.5-sonnet, gpt-4-turbo, gemini-pro-1.5, llama-3-70b, mixtral-8x7b.",
+      "Use case": "fast model comparison, cost arbitrage across providers.",
+      "flags": [
+        "has-api",
+        "open-source",
+        "has-free-tier",
+        "supports-streaming",
+        "supports-function-calling",
+        "supports-vision"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/models/openrouter.md",
+      "notes": "## Overview\n\nOpenRouter is an API aggregator that provides unified access to 100+ models from different providers through a single OpenAI-compatible API. You pay per token at each provider's rates + a",
+      "_type": "model"
+    },
+    {
+      "id": "replicate",
+      "name": "Replicate",
+      "description": "Run open-source models (Llama, Stable Diffusion, Whisper, etc.) via API. No GPU setup required. Pay per second of inference.",
+      "category": "ai-coding",
+      "url": "https://replicate.com",
+      "pricing": "freemium",
+      "alternatives": [
+        "modal",
+        "banana",
+        "groq"
+      ],
+      "quality_score": 8.5,
+      "discovery_context": "Need to run a Stable Diffusion variant without managing GPU infrastructure",
+      "discovered_by": "hermes-core",
+      "discovered_at": "2026-04-18",
+      "last_verified": "2026-04-24",
+      "integration_notes": "|",
+      "Python client": "pip install replicate",
+      "Best for": "trying open-source models fast, prototyping without infra.",
+      "Models": "llama-3-70b, llama-3-8b, sd-xl, sdxl-turbo, whisper-large-v3, cosxl.",
+      "flags": [
+        "has-api",
+        "has-free-tier",
+        "supports-streaming",
+        "supports-python"
+      ],
+      "_file": "/Users/hiren/hermes-plugins/exploration/models/replicate.md",
+      "notes": "## Overview\n\nReplicate lets you run open-source machine learning models through a simple API. No GPU setup, no Docker, no infra management. Pick a model, send inputs, get outputs.\n\n## Key Features\n\n- ",
+      "_type": "model"
+    }
+  ],
+  "stats": {
+    "total": 9,
+    "by_category": {
+      "infrastructure": 1,
+      "scraping": 1,
+      "ai-coding": 2,
+      "search": 2,
+      "llm-provider": 2,
+      "llm-chat": 1
+    },
+    "by_pricing": {
+      "freemium": 8,
+      "free": 1
+    },
+    "avg_quality_score": 8.8
+  }
+}

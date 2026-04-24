@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Discovery",
+  "description": "Schema for a tool, API, or model discovery",
+  "type": "object",
+  "required": ["id", "name", "description", "category", "url", "pricing", "discovered_by", "discovered_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique lowercase slug identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Official name of the tool/API/model"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "One sentence description, no marketing fluff"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "ai-coding", "ai-writing", "ai-image", "ai-video", "ai-audio",
+        "ai-agents", "productivity", "automation", "scraping",
+        "api-development", "infrastructure", "security", "research", "other",
+        "llm-provider", "embedding", "search", "scraping-api",
+        "llm-chat", "llm-reasoning", "vision", "image-gen", "video-gen",
+        "audio-gen", "multimodal"
+      ]
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Official website or documentation URL"
+    },
+    "pricing": {
+      "type": "string",
+      "enum": ["free", "freemium", "paid", "unknown"],
+      "description": "Pricing model"
+    },
+    "alternatives": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Known competitor tools/models by slug"
+    },
+    "quality_score": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Subjective quality score based on first-hand use"
+    },
+    "discovery_context": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "What task or investigation revealed this discovery"
+    },
+    "discovered_by": {
+      "type": "string",
+      "description": "Agent name (e.g. hermes-01) or human:name"
+    },
+    "discovered_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of discovery (YYYY-MM-DD)"
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date",
+      "description": "Date last verified (URL still works, info still accurate)"
+    },
+    "integration_notes": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "How an AI agent could integrate or use this"
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "has-api", "open-source", "has-free-tier", "supports-webhook",
+          "has-playground", "supports-streaming", "supports-vision",
+          "supports-json-mode", "supports-function-calling", "supports-mcp",
+          "self-hostable", "has-docker", "has-cli", "has-mobile-app"
+        ]
+      }
+    }
+  }
+}
