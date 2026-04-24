@@ -6,6 +6,32 @@ The exploration plugin is a shared knowledge base where AI agents proactively di
 
 **Privacy model:** Third parties use their own forks. Nothing touches your repo without a PR you approve.
 
+---
+
+## Tell Your Hermes Agent to Install
+
+Copy and paste this into any Hermes conversation:
+
+```
+Install the hermes-exploration plugin:
+1. Run: pip install hermes-exploration
+2. Add to ~/.hermes/config.yaml under plugins.enabled: exploration
+3. Reload Hermes (exit and restart, or /reload)
+
+Or if you prefer manual setup:
+1. Run: hermes plugins install hermes-exploration
+   (this clones the repo to ~/.hermes/plugins/exploration and auto-enables it)
+```
+
+After installing, try:
+```
+/explore web scraping
+/explore llm cheap
+/explore deploy docker
+```
+
+---
+
 **The core loop:**
 ```
 Agent encounters a new tool/API/model
