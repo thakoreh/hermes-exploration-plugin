@@ -18,7 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23.0"]
 
-[project.entry-points.hermes_agent.plugins]
+[project.entry-points."hermes_agent.plugins"]
 exploration = "hermes_exploration:register"
 
 [tool.setuptools.packages.find]
