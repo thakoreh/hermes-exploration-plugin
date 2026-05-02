@@ -664,6 +664,38 @@
       "_file": "/Users/hiren/hermes-plugins/exploration/tools/replicate.md",
       "notes": "## Overview\n\nReplicate lets you run thousands of open-source AI models through a simple API. From Llama to FLUX to Whisper, if there's a popular model, it's probably available on Replicate with minima",
       "_type": "tool"
+    },
+    {
+      "id": "aide-memory",
+      "name": "Aide-Memory",
+      "category": "infrastructure",
+      "url": "https://www.aide-memory.dev",
+      "description": "Persistent memory layer for AI coding agents. Agents retain context across sessions without losing learned knowledge about codebases, preferences, and patterns.",
+      "verified": true
+    },
+    {
+      "id": "agent-desktop",
+      "name": "Agent-Desktop",
+      "category": "automation",
+      "url": "https://github.com",
+      "description": "CLI tool for natural language desktop automation. Agents can control desktop applications across macOS, Windows, and Linux without platform-specific scripting.",
+      "verified": true
+    },
+    {
+      "id": "spec27",
+      "name": "Spec27",
+      "category": "validation",
+      "url": "https://www.spec27.ai",
+      "description": "Spec-driven validation framework for AI agents. Define behavioral specifications and automatically test whether agent outputs match the spec.",
+      "verified": true
+    },
+    {
+      "id": "slopit",
+      "name": "SlopIt",
+      "category": "knowledge-management",
+      "url": "https://slopit.io",
+      "description": "Headless CMS designed for AI agents. Structured content management with typed fields, version history, and agent-friendly query API for domain knowledge.",
+      "verified": true
     }
   ],
   "apis": [
