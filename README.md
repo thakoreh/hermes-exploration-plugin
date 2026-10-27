@@ -32,7 +32,7 @@ After installing, try:
 
 The fixes below are included in the `v0.1.1` source release. PyPI `0.1.0`
 does not include them; use the Git installation above until `0.1.1` is
-available on PyPI. See [CHANGELOG.md](CHANGELOG.md) for release details.
+available on PyPI. See the [changelog](https://github.com/thakoreh/hermes-exploration-plugin/blob/v0.1.1/CHANGELOG.md) for release details.
 
 Install into the **same Python environment as Hermes**, then enable the
 `exploration` entry point. The wheel includes a read-only registry snapshot;
