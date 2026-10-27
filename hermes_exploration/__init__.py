@@ -78,6 +78,10 @@ class ExplorationPlugin:
             items = registry.get(key, [])
             if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
                 raise ValueError(f"registry {key} must be a list of objects")
+            for item in items:
+                for field in ("name", "description"):
+                    if field in item and not isinstance(item[field], str):
+                        raise ValueError(f"registry {key} {field} must be a string")
         return registry
 
     def _write_registry(self, registry: Dict) -> None:
@@ -94,7 +98,7 @@ class ExplorationPlugin:
         query_lower = query.lower()
         results = []
         types_to_search = (
-            [discovery_type + "s"] if discovery_type and discovery_type + "s" in registry
+            [discovery_type + "s"] if discovery_type
             else ["tools", "apis", "models"]
         )
         for dtype in types_to_search:

@@ -70,7 +70,9 @@ def test_explicit_missing_path_does_not_fall_back(tmp_path, monkeypatch):
     assert not (tmp_path / 'missing').exists()
 
 
-@pytest.mark.parametrize('content', ['{', '[]', '{"tools": null}', '{"apis": [42]}'])
+@pytest.mark.parametrize('content', ['{', '[]', '{"tools": null}', '{"apis": [42]}',
+    '{"tools": [{"name": "fixture", "description": null}]}',
+    '{"tools": [{"name": null}]}'])
 def test_corrupt_registry_reports_error_without_overwriting(registry, content):
     path = registry / 'registry.json'
     path.write_text(content, encoding='utf-8')
@@ -89,6 +91,13 @@ def test_empty_registry(registry):
     (registry / 'registry.json').write_text('{}', encoding='utf-8')
     assert '0 tools' in exploration._handle_explore('')
     assert 'No discoveries' in exploration._handle_explore('x')
+
+
+def test_missing_type_collection_does_not_search_other_types(registry):
+    (registry / 'registry.json').write_text('{"tools": [{"name": "fixture"}]}', encoding='utf-8')
+    plugin = exploration.ExplorationPlugin(str(registry))
+    assert plugin.search('fixture', discovery_type='tool')
+    assert plugin.search('fixture', discovery_type='api') == []
 
 
 def test_search_limits_types_and_unicode(registry):
