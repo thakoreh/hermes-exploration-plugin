@@ -1,2 +1,3 @@
 include registry.json plugin.yaml __init__.py
+include CHANGELOG.md
 recursive-include scripts *.py
