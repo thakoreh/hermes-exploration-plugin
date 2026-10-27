@@ -1,11 +1,14 @@
 """Run with `python -I tests/smoke_installed.py` after installing the wheel."""
 
-from importlib.metadata import entry_points
+from importlib.metadata import entry_points, version
 from pathlib import Path
 import sys
 
 import hermes_exploration as exploration
 
+installed_version = version('hermes-exploration')
+if len(sys.argv) > 1:
+    assert installed_version == sys.argv[1], installed_version
 
 assert Path(sys.prefix) in Path(exploration.__file__).parents
 points = entry_points()
@@ -19,4 +22,4 @@ assert plugin.search('scraping')
 assert 'Usage:' in exploration._handle_explore('')
 assert 'discoveries' in exploration._handle_explore('scraping')
 assert 'No discoveries' in exploration._handle_explore('synthetic-no-match-1234')
-print('Installed wheel: entry point, bundled registry, help, search, and no-match passed')
+print(f'Installed wheel {installed_version}: entry point, bundled registry, help, search, and no-match passed')

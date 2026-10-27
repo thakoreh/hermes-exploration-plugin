@@ -1,5 +1,5 @@
 name: hermes-exploration-plugin
-version: 0.1.0
+version: 0.1.1
 description: Search the local tool, API, and model discovery registry.
 author: thakoreh
 provides_hooks:
