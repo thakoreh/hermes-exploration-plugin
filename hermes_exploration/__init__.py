@@ -19,8 +19,6 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-import git
-
 logger = logging.getLogger(__name__)
 
 # ── Capability gap patterns ───────────────────────────────────────────────────
@@ -66,29 +64,41 @@ class ExplorationPlugin:
         self._ensure_registry()
 
     def _ensure_registry(self) -> None:
-        if not self.registry_path.exists():
+        if not self.registry_path.exists() and not self.read_only:
             Path(self.registry_path).parent.mkdir(parents=True, exist_ok=True)
-            with open(self.registry_path, "w") as f:
+            with open(self.registry_path, "w", encoding="utf-8") as f:
                 json.dump({"version": 1, "generated_at": "", "tools": [], "apis": [], "models": [], "stats": {}}, f)
 
     def _read_registry(self) -> Dict[str, List[Dict]]:
-        try:
-            with open(self.registry_path) as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return {"version": 1, "generated_at": "", "tools": [], "apis": [], "models": [], "stats": {}}
+        with open(self.registry_path, encoding="utf-8") as f:
+            registry = json.load(f)
+        if not isinstance(registry, dict):
+            raise ValueError("registry must be a JSON object")
+        for key in ("tools", "apis", "models"):
+            items = registry.get(key, [])
+            if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
+                raise ValueError(f"registry {key} must be a list of objects")
+            for item in items:
+                for field in ("name", "description"):
+                    if field in item and not isinstance(item[field], str):
+                        raise ValueError(f"registry {key} {field} must be a string")
+        return registry
 
     def _write_registry(self, registry: Dict) -> None:
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.registry_path, "w") as f:
+        with open(self.registry_path, "w", encoding="utf-8") as f:
             json.dump(registry, f, indent=2)
 
     def search(self, query: str, discovery_type: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+        if discovery_type not in (None, "tool", "api", "model"):
+            raise ValueError("discovery_type must be tool, api, or model")
+        if limit < 0:
+            raise ValueError("limit must be non-negative")
         registry = self._read_registry()
         query_lower = query.lower()
         results = []
         types_to_search = (
-            [discovery_type + "s"] if discovery_type and discovery_type + "s" in registry
+            [discovery_type + "s"] if discovery_type
             else ["tools", "apis", "models"]
         )
         for dtype in types_to_search:
@@ -135,10 +145,11 @@ class ExplorationPlugin:
 
     def get_registry_stats(self) -> Dict[str, int]:
         registry = self._read_registry()
-        return {key: len(val) for key, val in registry.items() if key not in ("version", "generated_at", "stats")}
+        return {key: len(registry.get(key, [])) for key in ("tools", "apis", "models")}
 
     def git_status(self) -> Dict[str, Any]:
         try:
+            import git
             repo = git.Repo(self.repo_path)
             return {"dirty": repo.is_dirty(), "branch": repo.active_branch.name, "untracked_files": repo.untracked_files}
         except Exception as e:
@@ -148,6 +159,7 @@ class ExplorationPlugin:
         if self.read_only:
             return {"error": "read_only mode is enabled — push disabled"}
         try:
+            import git
             repo = git.Repo(self.repo_path)
             repo.index.add([str(self.registry_path)])
             repo.index.commit(message)
@@ -162,22 +174,24 @@ class ExplorationPlugin:
 
 def _get_plugin(repo_path: Optional[str] = None) -> Optional[ExplorationPlugin]:
     """Get an ExplorationPlugin instance, trying multiple possible locations."""
+    configured = repo_path or os.getenv("EXPLORATION_PLUGIN_PATH")
+    if configured:
+        path = Path(configured).expanduser()
+        return ExplorationPlugin(str(path), read_only=True) if (path / "registry.json").is_file() else None
     paths_to_try = []
-    if repo_path:
-        paths_to_try.append(Path(repo_path).expanduser())
     # Try git repo first
     git_repo = Path("~/hermes-plugins/hermes-exploration-plugin").expanduser()
     if git_repo.exists():
         paths_to_try.append(git_repo)
-    # Try the plugin directory itself
+    # Git directory installs keep the registry at the repository root.
     plugin_dir = Path(__file__).parent
-    paths_to_try.append(plugin_dir)
+    paths_to_try.extend([plugin_dir.parent, plugin_dir])
 
     for path in paths_to_try:
         try:
             registry = path / "registry.json"
             if registry.exists():
-                return ExplorationPlugin(repo_path=str(path))
+                return ExplorationPlugin(repo_path=str(path), read_only=True)
         except Exception:
             pass
     return None
@@ -206,11 +220,14 @@ def _on_post_tool_call(
 def _on_session_end(session_id: str = "", completed: bool = True, interrupted: bool = False, task_id: str = "", **_: None) -> None:
     """At session end, analyze session and surface relevant discoveries."""
     global _session_suggestions
-    if not session_id:
+    if not session_id and not task_id:
         return
 
     key = task_id or session_id or "default"
     used_tools = _session_tools.pop(key, [])
+    _session_suggestions.pop(session_id or key, None)
+    if interrupted or not completed:
+        return
 
     plugin = _get_plugin()
     if not plugin:
@@ -218,9 +235,13 @@ def _on_session_end(session_id: str = "", completed: bool = True, interrupted: b
 
     suggestions: List[Dict[str, str]] = []
     for tool in used_tools:
-        related = plugin.search(query=tool, limit=2)
+        try:
+            related = plugin.search(query=tool, limit=2)
+        except (OSError, ValueError) as exc:
+            logger.warning("Could not read exploration registry: %s", exc)
+            return
         for r in related:
-            if r["name"] not in used_tools:
+            if r.get("name") and r["name"] not in used_tools:
                 suggestions.append({"name": r["name"], "type": r.get("type", ""), "description": r.get("description", "")[:80]})
 
     seen = set()
@@ -231,7 +252,7 @@ def _on_session_end(session_id: str = "", completed: bool = True, interrupted: b
             unique.append(s)
 
     if unique:
-        _session_suggestions[session_id] = unique
+        _session_suggestions[session_id or key] = unique
 
 
 # ── Slash command ──────────────────────────────────────────────────────────────
@@ -246,15 +267,20 @@ Examples:
 """
 
 
-def _handle_explore(raw_args: str) -> Optional[str]:
+def _handle_explore(raw_args: str = "") -> Optional[str]:
     args = raw_args.strip()
     plugin = _get_plugin()
 
     if not plugin:
         return "Exploration registry not found. Install hermes-exploration or clone https://github.com/thakoreh/hermes-exploration-plugin"
 
-    if not args:
+    try:
         stats = plugin.get_registry_stats()
+        results = plugin.search(query=args, limit=8) if args else []
+    except (OSError, ValueError) as exc:
+        return f"Could not read exploration registry: {exc}"
+
+    if not args:
         return (
             f"🔍 Exploration Registry\n"
             f"   {stats.get('tools', 0)} tools · {stats.get('apis', 0)} APIs · {stats.get('models', 0)} models\n\n"
@@ -262,7 +288,6 @@ def _handle_explore(raw_args: str) -> Optional[str]:
             f"Example: /explore web scraping"
         )
 
-    results = plugin.search(query=args, limit=8)
     if not results:
         return f"No discoveries found for '{args}'. Try /explore <topic>."
 
@@ -271,7 +296,7 @@ def _handle_explore(raw_args: str) -> Optional[str]:
         dtype = r.get("type", "")
         name = r.get("name", "")
         desc = r.get("description", "")[:70]
-        price = r.get("pricing_model", "unknown")
+        price = r.get("pricing_model", r.get("pricing", "unknown"))
         lines.append(f"  [{dtype}] {name} ({price})")
         lines.append(f"         {desc}...")
     return "\n".join(lines)
@@ -290,5 +315,6 @@ def register(ctx) -> None:
         "explore",
         handler=_handle_explore,
         description="Search the tool/API/model discovery registry.",
+        args_hint="<query>",
     )
     logger.info("exploration plugin loaded — /explore, on_session_end, post_tool_call active")

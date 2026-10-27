@@ -14,6 +14,7 @@ import os
 import re
 import urllib.request
 import urllib.error
+from urllib.parse import urlencode
 from pathlib import Path
 
 TOOL_DIRECTORIES = [
@@ -33,7 +34,7 @@ def search_public_apis(query: str = None, category: str = None) -> list[dict]:
     """Search PublicAPIs.org."""
     url = 'https://api.publicapis.org/entries'
     if category:
-        url += f'?category={category}'
+        url += '?' + urlencode({'category': category})
     try:
         data = fetch_json(url)
         results = []
@@ -191,6 +192,7 @@ def main():
                 print(f'  {cat}')
         except Exception as e:
             print(f'Error: {e}')
+            return 1
         return
 
     if args.scan_repo:
@@ -199,7 +201,7 @@ def main():
         report = scan_repo(args.scan_repo)
         if 'error' in report:
             print(f'Error: {report["error"]}')
-            return
+            return 1
 
         if report['services']:
             print(f'\n[{len(report["services"])} Services Detected]')
@@ -236,14 +238,19 @@ def main():
     print(f'Searching tools for: {args.query or "all"}')
     print('=' * 60)
     results = search_public_apis(query=args.query)
+    failed = False
     for r in results:
         if 'error' in r:
             print(f'Error: {r["error"]}')
+            failed = True
             continue
         print(f"\n  {r['name']} ({r['category']})")
         print(f"  {r['description']}")
-        print(f"  {r['url']} | HTTPS: {r['HTTPS']} | Auth: {r['auth']}")
+        print(f"  {r['url']} | HTTPS: {r['https']} | Auth: {r['auth']}")
+    if not results:
+        print('No tools found.')
+    return 1 if failed else 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())
