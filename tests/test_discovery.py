@@ -97,13 +97,42 @@ def test_all_provider_branch_uses_both(monkeypatch, capsys):
     assert '[OpenRouter Models]' in out and '[Groq Models]' in out
 
 
-@pytest.mark.parametrize('args', [['--top', '0'], ['--max-price', '-1']])
+@pytest.mark.parametrize('args', [['--top', '0'], ['--max-price', '-1'], ['--max-price', 'nan']])
 def test_invalid_model_args_fail_before_network(monkeypatch, args):
     model = script('discover_models')
     monkeypatch.setattr(sys, 'argv', ['discover_models.py'] + args)
     with pytest.raises(SystemExit) as error:
         model.main()
     assert error.value.code == 2
+
+
+@pytest.mark.parametrize('price', [None, '-1', 'NaN', 'Infinity', 'unknown', '', '1e308'])
+def test_unknown_and_dynamic_prices_are_not_numeric(monkeypatch, price):
+    data = {'data': [{'id': 'fixture/dynamic', 'name': 'Router',
+                     'pricing': {'prompt': price, 'completion': price}}]}
+    model = script('discover_models')
+    monkeypatch.setattr(model, 'fetch_json', lambda url: data)
+    results = model.list_openrouter_models()
+    assert results[0]['price_input'] is None and results[0]['price_output'] is None
+    assert model.format_price(results[0]['price_output']) == 'variable/unknown'
+    assert model.filter_by_task(results, max_price=100) == []
+    assert model.filter_by_task(results, task='cheap') == []
+    api = script('discover_apis')
+    monkeypatch.setattr(api, 'fetch_json', lambda url: data)
+    assert api.search_openrouter()[0]['price_per_m_output'] is None
+
+
+def test_api_cli_displays_unknown_price(monkeypatch, capsys):
+    api = script('discover_apis')
+    monkeypatch.setattr(api, 'fetch_json', lambda url: {
+        'data': [{'id': 'fixture/router', 'name': 'Router', 'pricing': {'completion': '-1'}}],
+        'entries': [],
+    })
+    monkeypatch.setattr(sys, 'argv', ['discover_apis.py'])
+    assert api.main() == 0
+    output = capsys.readouterr().out
+    assert 'variable/unknown' in output
+    assert '$-' not in output
 
 
 def test_scan_missing_and_empty_fixture(monkeypatch, tmp_path):

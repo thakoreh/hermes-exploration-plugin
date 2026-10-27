@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import json
+import math
 import urllib.request
 import urllib.error
 import time
@@ -24,6 +25,16 @@ SOURCES = {
     'public_apis': 'https://api.publicapis.org/entries',
     'rapid_api': 'https://api.rapidapi.com',
 }
+
+
+def price_per_million(value):
+    if value is None:
+        return None
+    try:
+        price = float(value) * 1_000_000
+    except (ValueError, TypeError):
+        return None
+    return price if math.isfinite(price) and price >= 0 else None
 
 
 def fetch_json(url: str, timeout: int = 10) -> dict:
@@ -41,7 +52,7 @@ def search_openrouter(query: str = None) -> list[dict]:
             name = m.get('name', '')
             context = m.get('context_length', 0)
             pricing = m.get('pricing') or {}
-            price_per_m = float(pricing.get('completion', 0)) * 1_000_000
+            price_per_m = price_per_million(pricing.get('completion'))
             model_id = m.get('id', '')
             models.append({
                 'id': model_id,
@@ -119,7 +130,9 @@ def main():
             continue
         print(f"  {m['name']}")
         print(f"    {m['description'][:100]}...")
-        print(f"    context: {m['context_window']} tokens | price: ${m['price_per_m_output']:.4f}/M output")
+        price = m['price_per_m_output']
+        price_label = f'${price:.4f}/M' if price is not None else 'variable/unknown'
+        print(f"    context: {m['context_window']} tokens | price: {price_label} output")
         print()
 
     print('\n[Public APIs]')

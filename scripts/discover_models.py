@@ -10,6 +10,7 @@ Usage:
 
 import argparse
 import json
+import math
 import os
 import sys
 import urllib.request
@@ -19,6 +20,21 @@ PROVIDERS = {
     'openrouter': 'https://openrouter.ai/api/v1/models',
     'groq': 'https://api.groq.com/openai/v1/models',
 }
+
+
+def price_per_million(value):
+    """Negative routing sentinels and absent/nonfinite rates are not fixed prices."""
+    if value is None:
+        return None
+    try:
+        price = float(value) * 1_000_000
+    except (ValueError, TypeError):
+        return None
+    return price if math.isfinite(price) and price >= 0 else None
+
+
+def format_price(value, precision=4):
+    return f'${value:.{precision}f}/M' if value is not None else 'variable/unknown'
 
 
 def fetch_json(url: str, headers: dict = None, timeout: int = 15) -> dict:
@@ -36,18 +52,20 @@ def list_openrouter_models() -> list[dict]:
     models = []
     for m in data.get('data', []):
         pricing = m.get('pricing', {}) or {}
+        if not isinstance(pricing, dict):
+            raise ValueError('model pricing must be an object')
         models.append({
             'id': m.get('id', ''),
             'name': m.get('name', ''),
             'description': m.get('description', '')[:200],
             'context_length': m.get('context_length', 0),
-            'price_input': float(pricing.get('prompt', 0)) * 1_000_000,
-            'price_output': float(pricing.get('completion', 0)) * 1_000_000,
+            'price_input': price_per_million(pricing.get('prompt')),
+            'price_output': price_per_million(pricing.get('completion')),
             'supports_vision': m.get('supports_vision', False),
             'supports_function_calling': m.get('supports_function_calling', False),
             'supports_streaming': m.get('supports_streaming', True),
         })
-    return sorted(models, key=lambda x: x['price_output'])
+    return sorted(models, key=lambda x: (x['price_output'] is None, x['price_output'] or 0))
 
 
 def list_groq_models() -> list[dict]:
@@ -96,7 +114,7 @@ def filter_by_task(models: list[dict], task: str = None, max_price: float = None
                   else any(k in m['id'].lower() for k in keywords))]
 
     if max_price is not None:
-        models = [m for m in models if m.get('price_output', 999) <= max_price]
+        models = [m for m in models if m.get('price_output') is not None and m['price_output'] <= max_price]
 
     return models
 
@@ -109,8 +127,8 @@ def main():
     parser.add_argument('--max-price', type=float, help='Max price per M output tokens')
     parser.add_argument('--top', type=int, default=20, help='Number of results')
     args = parser.parse_args()
-    if args.max_price is not None and args.max_price < 0:
-        parser.error('--max-price must be non-negative')
+    if args.max_price is not None and (not math.isfinite(args.max_price) or args.max_price < 0):
+        parser.error('--max-price must be finite and non-negative')
     if args.top < 1:
         parser.error('--top must be positive')
 
@@ -124,7 +142,7 @@ def main():
                 continue
             print(f"\n  {m['name']}")
             print(f"    context: {m['context_length']:,} tokens")
-            print(f"    price: ${m['price_input']:.6f}/M in, ${m['price_output']:.6f}/M out")
+            print(f"    price: {format_price(m['price_input'], 6)} in, {format_price(m['price_output'], 6)} out")
             features = []
             if m.get('supports_vision'): features.append('vision')
             if m.get('supports_function_calling'): features.append('function_calling')
@@ -142,7 +160,7 @@ def main():
         for m in models[:args.top]:
             print(f"\n  {m['name']}")
             print(f"    {m['description'][:120]}...")
-            print(f"    context: {m['context_length']:,} tokens | ${m['price_output']:.4f}/M out")
+            print(f"    context: {m['context_length']:,} tokens | {format_price(m['price_output'])} out")
             feats = [f for f in ['vision', 'function_calling', 'streaming'] if m.get(f'supports_{f}')]
             if feats:
                 print(f"    {', '.join(feats)}")

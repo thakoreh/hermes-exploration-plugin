@@ -195,8 +195,11 @@ python scripts/discover_models.py --provider openrouter --max-price 1.00
 ```
 
 OpenRouter metadata uses a public read-only endpoint. Prices shown by both model
-scripts are dollars per **million** tokens. Groq metadata requires `GROQ_API_KEY`;
-the script reports a missing key without making a request. `--provider all`
+scripts are dollars per **million** tokens. Variable or unavailable OpenRouter
+rates display as `variable/unknown` and are
+excluded from numeric price ceilings; they are never treated as free.
+Groq metadata requires `GROQ_API_KEY`; the script reports a missing key without
+making a request. `--provider all`
 queries both providers. Discovery scripts report provider failures with a nonzero
 exit code. Catalog availability and prices can change; these scripts do not call
 inference or verify every catalog entry. Repository scans read local files, so
