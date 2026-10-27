@@ -10,7 +10,10 @@ Usage:
 
 import argparse
 import json
+import os
+import sys
 import urllib.request
+import urllib.error
 
 PROVIDERS = {
     'openrouter': 'https://openrouter.ai/api/v1/models',
@@ -38,8 +41,8 @@ def list_openrouter_models() -> list[dict]:
             'name': m.get('name', ''),
             'description': m.get('description', '')[:200],
             'context_length': m.get('context_length', 0),
-            'price_input': pricing.get('prompt', 0),
-            'price_output': pricing.get('completion', 0),
+            'price_input': float(pricing.get('prompt', 0)) * 1_000_000,
+            'price_output': float(pricing.get('completion', 0)) * 1_000_000,
             'supports_vision': m.get('supports_vision', False),
             'supports_function_calling': m.get('supports_function_calling', False),
             'supports_streaming': m.get('supports_streaming', True),
@@ -49,8 +52,10 @@ def list_openrouter_models() -> list[dict]:
 
 def list_groq_models() -> list[dict]:
     """List all Groq models."""
-    data = fetch_json(PROVIDERS['groq'], headers={'Authorization': 'Bearer dummy'})
-    # Groq doesn't need auth for listing — it's just metadata
+    key = os.getenv('GROQ_API_KEY')
+    if not key:
+        raise ValueError('GROQ_API_KEY is required for Groq model metadata')
+    data = fetch_json(PROVIDERS['groq'], headers={'Authorization': f'Bearer {key}'})
     models = []
     for m in data.get('data', []):
         models.append({
@@ -87,9 +92,10 @@ def filter_by_task(models: list[dict], task: str = None, max_price: float = None
             'cheap': ['free', '0.00'],
         }
         keywords = task_keywords.get(task.lower(), [task.lower()])
-        models = [m for m in models if any(k in m['id'].lower() for k in keywords)]
+        models = [m for m in models if (m.get('price_output') == 0 if task.lower() == 'cheap'
+                  else any(k in m['id'].lower() for k in keywords))]
 
-    if max_price:
+    if max_price is not None:
         models = [m for m in models if m.get('price_output', 999) <= max_price]
 
     return models
@@ -103,6 +109,10 @@ def main():
     parser.add_argument('--max-price', type=float, help='Max price per M output tokens')
     parser.add_argument('--top', type=int, default=20, help='Number of results')
     args = parser.parse_args()
+    if args.max_price is not None and args.max_price < 0:
+        parser.error('--max-price must be non-negative')
+    if args.top < 1:
+        parser.error('--top must be positive')
 
     if args.compare:
         print(f'Comparing: {args.compare}')
@@ -137,7 +147,7 @@ def main():
             if feats:
                 print(f"    {', '.join(feats)}")
 
-    if args.provider == 'groq':
+    if args.provider in ('groq', 'all'):
         print('[Groq Models]')
         print('=' * 70)
         models = list_groq_models()
@@ -146,4 +156,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        print(f'Error: {exc}', file=sys.stderr)
+        raise SystemExit(1)

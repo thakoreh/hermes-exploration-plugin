@@ -1,0 +1,2 @@
+include registry.json plugin.yaml __init__.py
+recursive-include scripts *.py

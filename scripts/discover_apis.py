@@ -16,6 +16,7 @@ import json
 import urllib.request
 import urllib.error
 import time
+from urllib.parse import urlencode
 
 # API discovery sources
 SOURCES = {
@@ -39,16 +40,17 @@ def search_openrouter(query: str = None) -> list[dict]:
         for m in data.get('data', []):
             name = m.get('name', '')
             context = m.get('context_length', 0)
-            pricing = m.get('pricing', [0, 0])
-            price_per_m = pricing[1] if len(pricing) > 1 else 0
+            pricing = m.get('pricing') or {}
+            price_per_m = float(pricing.get('completion', 0)) * 1_000_000
+            model_id = m.get('id', '')
             models.append({
-                'id': name.lower().replace(' ', '-'),
+                'id': model_id,
                 'name': name,
                 'description': m.get('description', '')[:150],
                 'context_window': context,
                 'price_per_m_output': price_per_m,
                 'category': 'llm-provider',
-                'url': 'https://openrouter.ai/models/' + name.lower().replace(' ', '-'),
+                'url': 'https://openrouter.ai/' + model_id,
                 'pricing': 'freemium',
                 'flags': ['has-api', 'has-free-tier', 'supports-streaming'],
             })
@@ -65,11 +67,11 @@ def search_public_apis(category: str = None, query: str = None) -> list[dict]:
     try:
         url = 'https://api.publicapis.org/entries'
         if category:
-            url += f'?category={category}'
+            url += '?' + urlencode({'category': category})
         data = fetch_json(url)
         apis = []
         for entry in data.get('entries', []):
-            if query and query.lower() not in entry.get('description', '').lower():
+            if query and query.lower() not in (entry.get('Description', '') + ' ' + entry.get('API', '')).lower():
                 continue
             apis.append({
                 'name': entry.get('API', ''),
@@ -78,7 +80,7 @@ def search_public_apis(category: str = None, query: str = None) -> list[dict]:
                 'category': entry.get('Category', ''),
                 'https': entry.get('HTTPS', False),
                 'auth': entry.get('Auth', ''),
-                'pricing': 'free' if entry.get('Cors', '') == 'yes' else 'unknown',
+                'pricing': 'unknown',
             })
         return apis[:20]
     except Exception as e:
@@ -100,6 +102,7 @@ def main():
                 print(f'  {cat}')
         except Exception as e:
             print(f'Error: {e}')
+            return 1
         return
 
     print(f'Searching for: {args.query or "all APIs"}')
@@ -107,10 +110,12 @@ def main():
 
     # Always show OpenRouter models (most useful for agents)
     print('\n[OpenRouter Models — free LLM APIs]')
+    failed = False
     models = search_openrouter(args.query)
     for m in models:
         if 'error' in m:
             print(f'  Error: {m["error"]}')
+            failed = True
             continue
         print(f"  {m['name']}")
         print(f"    {m['description'][:100]}...")
@@ -121,12 +126,17 @@ def main():
     apis = search_public_apis(category=args.category, query=args.query)
     for a in apis:
         if 'error' in a:
+            print(f'  Error: {a["error"]}')
+            failed = True
             continue
         print(f"  {a['name']} ({a['category']})")
         print(f"    {a['description']}")
         print(f"    {a['url']} | HTTPS: {a['https']} | Auth: {a['auth']}")
         print()
+    if not models and not apis:
+        print('No APIs found.')
+    return 1 if failed else 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

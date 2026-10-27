@@ -16,8 +16,7 @@ Copy and paste this into any Hermes conversation:
 Install the hermes-exploration plugin:
 hermes plugins install thakoreh/hermes-exploration-plugin --enable
 
-Then restart Hermes:
-hermes gateway restart
+Then start a new Hermes chat (or restart your own running gateway).
 ```
 
 After installing, try:
@@ -31,10 +30,12 @@ After installing, try:
 
 ### Alternative: pip install
 
-If you prefer pip over the git-based install:
+Install into the **same Python environment as Hermes**, then enable the
+`exploration` entry point. The wheel includes a read-only registry snapshot;
+it does not need a separate clone for search.
 
 ```bash
-pip install hermes-exploration
+python -m pip install hermes-exploration
 ```
 
 Then manually add `exploration` to your plugins list in `~/.hermes/config.yaml`:
@@ -49,7 +50,10 @@ Then restart Hermes: `hermes gateway restart`
 
 ---
 
-**Windows note:** `hermes plugins install` and the paths above work on Windows too. If using Command Prompt or PowerShell, `~` expands to your user profile (e.g. `C:\Users\YourName\`). You can also find your config at `%USERPROFILE%\.hermes\config.yaml`.
+**Windows note:** `hermes plugins install` works in PowerShell and Command Prompt.
+For manual paths, use `$HOME` in PowerShell or `%USERPROFILE%` in Command Prompt;
+Command Prompt does not expand `~`. The default config is
+`%USERPROFILE%\.hermes\config.yaml`. `HERMES_HOME` overrides the Hermes profile.
 
 ---
 
@@ -89,14 +93,20 @@ exploration-plugin/
 git clone https://github.com/YOUR_USERNAME/hermes-exploration-plugin.git ~/hermes-plugins/exploration
 cd ~/hermes-plugins/exploration
 
-# 2. Create venv and install
-python3.11 -m venv .venv
+# 2. Create venv and install (Python 3.9+)
+python -m venv .venv
 source .venv/bin/activate
 pip install -e .
 
 # 3. Configure (optional)
 export EXPLORATION_READONLY=true   # disable all push operations
 ```
+
+In PowerShell, activate with `.\.venv\Scripts\Activate.ps1` and configure with
+`$env:EXPLORATION_READONLY = 'true'`. To use a different local registry for
+`/explore`, set `EXPLORATION_PLUGIN_PATH` to its directory. A missing override
+reports an error instead of silently searching another registry. The slash
+command only reads local data and never calls a model provider or pushes changes.
 
 ### Syncing from the upstream repo
 
@@ -118,7 +128,7 @@ from hermes_exploration import ExplorationPlugin
 
 plugin = ExplorationPlugin(
     repo_path='~/hermes-plugins/exploration',
-    read_only=False,  # True = disable push (safe for shared environments)
+    read_only=True,
 )
 
 # Discover
@@ -126,9 +136,8 @@ plugin.search(query='web scraping')
 plugin.search_in_context(domain='llm', working_dir='/project')
 plugin.suggest_from_error('tried to browse the web but no browser available')
 
-# Contribute
-plugin.add_discovery({...}, discovery_type='tool')
-plugin.push_changes("add firecrawl — new web scraping tool discovered during task")
+# Contributions: edit a discovery markdown file in your fork, rebuild the
+# registry with scripts/build_registry.py, then review and commit the diff.
 ```
 
 ---
@@ -163,19 +172,45 @@ Every discovery follows this structure (see `schemas/` for full JSON Schema):
 ```json
 {
   "name": "Tool or API Name",
-  "description": "One sentence description (min 20 chars)",
-  "category": "web-scraping | code-generation | ai-agents | ...",
-  "pricing_model": "free | freemium | paid | open-source | unknown",
-  "status": "verified | unverified | unreliable",
-  "added_by": "agent-name or username",
-  "tags": ["tag1", "tag2"],
-  "github_url": "https://github.com/...",
-  "official_documentation_url": "https://...",
-  "install_command": "pip install ..."
+  "description": "One sentence description (max 200 chars)",
+  "id": "tool-name",
+  "category": "ai-agents",
+  "pricing": "unknown",
+  "discovered_by": "agent-name or username",
+  "discovered_at": "2026-05-02",
+  "url": "https://example.com"
 }
 ```
 
-Full schemas: `schemas/tool_schema.json`, `schemas/api_schema.json`, `schemas/model_schema.json`
+Full schema: `schemas/discovery.schema.json`.
+
+## Discovery scripts and local checks
+
+```bash
+python scripts/discover_tools.py --help
+python scripts/discover_apis.py --help
+python scripts/discover_models.py --help
+python scripts/discover_tools.py --scan-repo /path/to/synthetic-or-approved-repo
+python scripts/discover_models.py --provider openrouter --max-price 1.00
+```
+
+OpenRouter metadata uses a public read-only endpoint. Prices shown by both model
+scripts are dollars per **million** tokens. Groq metadata requires `GROQ_API_KEY`;
+the script reports a missing key without making a request. `--provider all`
+queries both providers. Discovery scripts report provider failures with a nonzero
+exit code. Catalog availability and prices can change; these scripts do not call
+inference or verify every catalog entry. Repository scans read local files, so
+only point them at a directory you intend to inspect.
+
+```bash
+python -m pip install -e ".[dev]" build
+python -m pytest -q
+python -m build
+```
+
+Tests use synthetic registries and provider metadata without credentials or
+external writes. After building, install the wheel into a new virtual environment
+and invoke `/explore` from outside this checkout to verify packaged data.
 
 ---
 
